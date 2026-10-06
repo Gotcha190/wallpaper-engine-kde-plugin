@@ -59,7 +59,7 @@ void ScreenSaverMonitor::wireUp(QDBusConnection bus) {
     // org.kde.screensaver is still live gets resynced too, not just the
     // portable one.
     queryActiveState(bus, "org.freedesktop.ScreenSaver", "org.freedesktop.ScreenSaver");
-    queryActiveState(bus, "org.kde.screensaver", "org.kde.screensaver");
+    queryActiveState(bus, "org.kde.screensaver", "org.freedesktop.ScreenSaver");
 
     // Either side restarting mid-session (kded_screenlocker for the FDO
     // name, its org.kde.screensaver counterpart) drops that name off the
@@ -79,7 +79,7 @@ void ScreenSaverMonitor::wireUp(QDBusConnection bus) {
                                                QDBusServiceWatcher::WatchForRegistration,
                                                this);
     connect(kdeWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this, bus](const QString&) {
-        queryActiveState(bus, "org.kde.screensaver", "org.kde.screensaver");
+        queryActiveState(bus, "org.kde.screensaver", "org.freedesktop.ScreenSaver");
     });
 }
 
