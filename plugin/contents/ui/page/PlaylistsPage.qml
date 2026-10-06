@@ -20,7 +20,8 @@ Item {
     property var wpListModel: null
     property var videoListModel: null
     property string cfg_ActivePlaylistId: ""
-    property int    cfg_CurrentItemIndex: 0   // used to highlight the playing row
+    property int    cfg_CurrentItemIndex: 0
+    property string currentWorkshopId: ""
 
     // Test surface
     readonly property alias playlistsView: lvPlaylists
@@ -380,7 +381,7 @@ Item {
                         // visible "you are here" marker in the queue.
                         readonly property bool isPlayingRow:
                             root.cfg_ActivePlaylistId === root._selectedId
-                            && index === root.cfg_CurrentItemIndex
+                            && workshopId === root.currentWorkshopId
 
                         Rectangle {
                             id: content

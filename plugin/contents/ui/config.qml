@@ -301,6 +301,8 @@ ColumnLayout {
 
         PlaylistsPage {
             id: playlistsPage
+            currentWorkshopId: root.wallpaperConfiguration
+                ? (root.wallpaperConfiguration["WallpaperWorkShopId"] || "") : ""
             manager: playlistController.manager
             wpListModel: wpListModel
             videoListModel: videoPage.videoListModel
