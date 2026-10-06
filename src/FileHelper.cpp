@@ -273,6 +273,16 @@ QString FileHelper::patchedHtml(const QString& path) {
     static const QString patch =
         QStringLiteral("<script>"
                        "(function(){"
+                       // Wallpapers register audio callbacks in their own initial scripts.
+                       // QWebChannel is connected later; retain every early subscriber.
+                       "window.__wekAudioListeners=[];"
+                       "window.wallpaperRegisterAudioListener=function(listener){"
+                       "if(typeof listener!=='function')return;"
+                       "if(window.__wekAudioListeners.indexOf(listener)>=0)return;"
+                       "window.__wekAudioListeners.push(listener);"
+                       "if(window.wpeQml&&window.wpeQml.sigAudio)"
+                       "window.wpeQml.sigAudio.connect(listener);"
+                       "};"
                        // Page-side error handlers — routed through console.error so the
                        // QML onJavaScriptConsoleMessage handler picks them up at level 2,
                        // and prefixed [WEK-page UNCAUGHT/UNHANDLED-PROMISE/STACK] so the

@@ -455,7 +455,7 @@ Item {
             else
                 console.log("[WEK] qwebchannel source loaded (" + webItem.qwebChannelJs.length + " chars)");
 
-            // Single Deferred script: Audio listener + QWebChannel + channel init
+            // QWebChannel connects after the early audio API injected in patchedHtml.
             // DocumentCreation injection doesn't work for dynamically inserted
             // sourceCode scripts on this Qt build, so everything goes in Deferred.
             userScripts.insert([
@@ -464,14 +464,6 @@ Item {
                     injectionPoint: WebEngineScript.Deferred,
                     name: "WallpaperEngineInit",
                     sourceCode: `
-                        // Audio listener registration (available for wallpapers that
-                        // call wallpaperRegisterAudioListener before QWebChannel connects)
-                        window.wallpaperRegisterAudioListener = function(listener) {
-                            if(window.wpeQml)
-                                window.wpeQml.sigAudio.connect(listener);
-                            else
-                                window.wallpaperRAed = listener;
-                        };
                     ` + webItem.qwebChannelJs + `
                         console.log('[WEK] Deferred script running, QWebChannel=' + typeof QWebChannel);
                         new QWebChannel(qt.webChannelTransport, function(channel) {
@@ -479,8 +471,9 @@ Item {
                             window.wpeQml = channel.objects.wpeQml;
                             var wpeQml = window.wpeQml;
                             var propertyListener = window.wallpaperPropertyListener;
-                            if(window.wallpaperRAed)
-                                wpeQml.sigAudio.connect(window.wallpaperRAed);
+                            (window.__wekAudioListeners || []).forEach(function(listener) {
+                                wpeQml.sigAudio.connect(listener);
+                            });
                             if(propertyListener) {
                                 if(propertyListener.applyGeneralProperties)
                                     wpeQml.sigGeneralProperties.connect(propertyListener.applyGeneralProperties);
