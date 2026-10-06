@@ -475,10 +475,14 @@ Item {
                                 wpeQml.sigAudio.connect(listener);
                             });
                             if(propertyListener) {
-                                if(propertyListener.applyGeneralProperties)
+                                if(propertyListener.applyGeneralProperties) {
                                     wpeQml.sigGeneralProperties.connect(propertyListener.applyGeneralProperties);
-                                if(propertyListener.applyUserProperties)
+                                    propertyListener.applyGeneralProperties(wpeQml.generalProperties || {});
+                                }
+                                if(propertyListener.applyUserProperties) {
                                     wpeQml.sigUserProperties.connect(propertyListener.applyUserProperties);
+                                    propertyListener.applyUserProperties(wpeQml.userProperties || {});
+                                }
                             }
                             // No more wpeQml.loaded = true — the QML side now drives
                             // init via setLoaded(true) on LoadSucceededStatus, fired
