@@ -10,6 +10,7 @@ namespace wekde
 
 class MouseGrabber : public QQuickItem {
     Q_OBJECT
+    Q_PROPERTY(bool observeClicks READ observeClicks WRITE setObserveClicks NOTIFY observeClicksChanged)
     Q_PROPERTY(bool forceCapture READ forceCapture WRITE setForceCapture NOTIFY forceCaptureChanged)
     Q_PROPERTY(QQuickItem* target READ target WRITE setTarget NOTIFY targetChanged)
 
@@ -17,6 +18,9 @@ public:
     MouseGrabber(QQuickItem* parent = nullptr);
     virtual ~MouseGrabber() override {};
 
+    bool observeClicks() const { return m_observeClicks; }
+    void setObserveClicks(bool value);
+    Q_INVOKABLE void forwardMouseEvent(int type, QPointF position, int button, int buttons, int modifiers);
     bool        forceCapture() const;
     QQuickItem* target() const;
 
@@ -34,12 +38,14 @@ protected:
     void hoverMoveEvent(QHoverEvent*) override;
 
 signals:
+    void observeClicksChanged();
     void forceCaptureChanged();
     void targetChanged();
 
 private:
     void                 sendMouseEvent(QMouseEvent*);
     void                 sendHoverEvent(QHoverEvent*);
+    bool                 m_observeClicks { false };
     bool                 m_forceCapture { false };
     QPointer<QQuickItem> m_target { nullptr };
     // Snapshot of m_target->acceptedMouseButtons() captured BEFORE the grabber

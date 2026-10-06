@@ -147,6 +147,41 @@ Rectangle {
     property string backendWorkshopId: ""
 
     property var mouseHooker
+    property var desktopMouseListener: null
+    property bool desktopClickActive: false
+    Connections {
+        target: background.desktopMouseListener
+        ignoreUnknownSignals: true
+        function onPressed(mouse) {
+            background.desktopClickActive = false;
+            if (mouse.button !== Qt.LeftButton || !background.mouseHooker) return;
+            const hovered = background.desktopMouseListener.hoveredItem;
+            if (hovered && !hovered.blank) return;
+            if (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) return;
+            const pos = background.desktopMouseListener.mapToItem(
+                background.mouseHooker, mouse.x, mouse.y);
+            background.desktopClickActive = true;
+            background.mouseHooker.forwardMouseEvent(
+                2 /* MouseButtonPress */, pos, mouse.button, mouse.buttons, mouse.modifiers);
+        }
+        function onPositionChanged(mouse) {
+            if (!background.desktopClickActive || !background.mouseHooker) return;
+            const pos = background.desktopMouseListener.mapToItem(
+                background.mouseHooker, mouse.x, mouse.y);
+            background.mouseHooker.forwardMouseEvent(
+                5 /* MouseMove */, pos, Qt.NoButton, mouse.buttons, mouse.modifiers);
+        }
+        function onReleased(mouse) {
+            if (!background.desktopClickActive || mouse.button !== Qt.LeftButton) return;
+            background.desktopClickActive = false;
+            if (!background.mouseHooker) return;
+            const pos = background.desktopMouseListener.mapToItem(
+                background.mouseHooker, mouse.x, mouse.y);
+            background.mouseHooker.forwardMouseEvent(
+                3 /* MouseButtonRelease */, pos, mouse.button, mouse.buttons, mouse.modifiers);
+        }
+        function onCanceled() { background.desktopClickActive = false; }
+    }
     // Declarative MouseGrabber factory for doHookMouse. Using a Component (vs
     // Qt.createQmlObject with an inline source string) lets qmlcachegen
     // precompile the body and surfaces typos at parse time. The MouseGrabber
@@ -155,6 +190,7 @@ Rectangle {
         id: mouseHookerComponent
         MouseGrabber {
             z: -1
+            observeClicks: background.desktopMouseListener !== null
             anchors.fill: parent
         }
     }
@@ -283,6 +319,7 @@ Rectangle {
             let hookParent = null;
             // Plasma 5: MouseEventListener → QQuickGridView
             const screenArea = Common.findItem(Window.contentItem, "MouseEventListener");
+            background.desktopMouseListener = screenArea;
             if(screenArea !== null) {
                 hookParent = Common.findItem(screenArea, "QQuickGridView");
             }

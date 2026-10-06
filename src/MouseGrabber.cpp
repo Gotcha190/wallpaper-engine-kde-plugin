@@ -13,6 +13,24 @@ MouseGrabber::MouseGrabber(QQuickItem* parent): QQuickItem(parent) {
     setAcceptHoverEvents(true);
 }
 
+void MouseGrabber::setObserveClicks(bool value) {
+    if (m_observeClicks == value) return;
+    m_observeClicks = value;
+    // FolderView's MouseEventListener owns presses and selection gestures.
+    // Its signals relay empty-desktop clicks; this item still forwards hover.
+    setAcceptedMouseButtons(value ? Qt::NoButton : Qt::LeftButton);
+    emit observeClicksChanged();
+}
+
+void MouseGrabber::forwardMouseEvent(int type, QPointF position, int button, int buttons, int modifiers) {
+    if (type != QEvent::MouseButtonPress && type != QEvent::MouseButtonRelease
+        && type != QEvent::MouseButtonDblClick && type != QEvent::MouseMove) return;
+    QMouseEvent event(static_cast<QEvent::Type>(type), position, mapToGlobal(position),
+                      static_cast<Qt::MouseButton>(button), Qt::MouseButtons(buttons),
+                      Qt::KeyboardModifiers(modifiers));
+    sendMouseEvent(&event);
+}
+
 bool MouseGrabber::forceCapture() const { return m_forceCapture; }
 
 QQuickItem* MouseGrabber::target() const { return m_target; }
