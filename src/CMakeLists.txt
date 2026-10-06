@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME}
 	WebUrlInterceptor.cpp
 	WebProfileRegistry.cpp
 	QmlCachePurge.cpp
+	PlaylistSync.cpp
 	Playlist.cpp
 	PlaylistManager.cpp
 	PlaylistsModel.cpp

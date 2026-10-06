@@ -19,6 +19,7 @@
 #include "SafeWallpaperBridge.hpp"
 #include "SafeWallpaperBridgeController.hpp"
 #include "PlaylistManager.hpp"
+#include "PlaylistSync.hpp"
 #include "PlaylistsModel.hpp"
 #include "PlaylistItemsModel.hpp"
 #include "WekControl.hpp"
@@ -143,6 +144,7 @@ public:
         qmlRegisterType<wekde::SafeWallpaperBridgeController>(
             uri, WPVer[0], WPVer[1], "SafeWallpaperBridgeController");
         qmlRegisterType<wekde::PlaylistManager>(uri, WPVer[0], WPVer[1], "PlaylistManager");
+        qmlRegisterType<wekde::PlaylistSync>(uri, 1, 2, "PlaylistSync");
         qmlRegisterUncreatableType<wekde::PlaylistsModel>(
             uri,
             WPVer[0],

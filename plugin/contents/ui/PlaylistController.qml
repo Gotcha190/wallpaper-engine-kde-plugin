@@ -15,6 +15,30 @@ import com.github.captsilver.wallpaperEngineKde
 Item {
     id: root
 
+    property bool _ready: false
+    property bool _joining: false
+    readonly property bool syncFollower: sync.follower
+    PlaylistSync {
+        id: sync
+        onPicked: function(workshopId, index) {
+            root.setCurrentItemIndex(index);
+            root._applyWorkshopId(workshopId);
+        }
+        onAdvanceRequested: function(delta) { mgr.stepBy(delta); }
+        onLeadershipChanged: {
+            if (root._ready && !root._joining && !root.editorMode
+                && !sync.follower && root.activePlaylistIdRead) {
+                mgr.activate(root.activePlaylistIdRead);
+                if (!root._pauseGate) mgr.pauseTicks();
+            }
+        }
+    }
+    function _joinSync() {
+        root._joining = true;
+        sync.join(root.editorMode ? "" : root.activePlaylistIdRead);
+        root._joining = false;
+    }
+
     // Inputs (set by parent — main.qml or config.qml)
     property var wpListModel:    null   // WallpaperListModel
     property var videoListModel: null   // VideoListModel
@@ -76,7 +100,7 @@ Item {
 
     PlaylistManager {
         id: mgr
-        editorMode: root.editorMode
+        editorMode: root.editorMode || root.syncFollower
         onTick: function(workshopId) { root._applyWorkshopId(workshopId); }
         onRequestFilteredPick: { root._serveFilteredPick(); }
         onRequestFilteredPreviousPick: { root._servePreviousFilteredPick(); }
@@ -98,7 +122,8 @@ Item {
                 root.setActivePlaylistId(mgr.activePlaylistId);
         }
         onCurrentItemIndexChanged: {
-            if (root.currentItemIndexRead !== mgr.currentItemIndex)
+            if (!root.editorMode && !root.syncFollower
+                && root.currentItemIndexRead !== mgr.currentItemIndex)
                 root.setCurrentItemIndex(mgr.currentItemIndex);
         }
         // Editor mode only: every successful persist() to playlists.json
@@ -123,11 +148,11 @@ Item {
         // resolve and spends a budget that switches the playlist off after
         // eight misses.  acceptPick("") on no-items is handled inside
         // _serveFilteredPick.
-        mgr.stepBy(1);
+        sync.stepBy(1);
     }
 
     function previous() {
-        mgr.stepBy(-1);
+        sync.stepBy(-1);
     }
 
     function pause() {
@@ -267,6 +292,7 @@ Item {
         }
         root._pendingWorkshopId = "";
         root.setWallpaperFromItem(item);
+        sync.publish(workshopId, mgr.currentItemIndex);
 
         // Emit D-Bus WallpaperChanged on every successful advance.  Third-
         // party panel widgets subscribe to this for "now playing" displays.
@@ -390,6 +416,8 @@ Item {
     }
 
     Component.onCompleted: {
+        root._ready = true;
+        root._joinSync();
         // Migration: RandomizeWallpaper=on AND no ActivePlaylistId yet → activate
         // the Filtered Library.
         if (root.randomizeWallpaperRead && !root.activePlaylistIdRead) {
@@ -431,6 +459,8 @@ Item {
     // config dialog updates plasmoid config but the runtime controller's
     // manager stays inactive — wallpapers don't cycle.
     onActivePlaylistIdReadChanged: {
+        if (!root._ready) return;
+        root._joinSync();
         if (root.activePlaylistIdRead === mgr.activePlaylistId) return;
         // Reset Filtered Library shuffle memory whenever the active playlist
         // changes — a re-enter of __filtered_library__ after a different
