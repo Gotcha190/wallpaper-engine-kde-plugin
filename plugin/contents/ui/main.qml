@@ -425,6 +425,14 @@ Rectangle {
         Component.onCompleted: dbusControl.setPlaylistController(playlistController)
     }
 
+    // QML writes update the live property map; persist the complete selection
+    // after index, workshop id and source have changed together.
+    Timer {
+        id: playlistSaveTimer
+        interval: 0
+        onTriggered: wallpaper.configuration.writeConfig()
+    }
+
     PlaylistController {
         id: playlistController
         wpListModel: wpListModel
@@ -451,16 +459,20 @@ Rectangle {
         // QML can resolve Q_PROPERTY assignments correctly.
         setActivePlaylistId: function(id) {
             wallpaper.configuration.ActivePlaylistId = id;
+            playlistSaveTimer.restart();
         }
         setCurrentItemIndex: function(idx) {
             wallpaper.configuration.CurrentItemIndex = idx;
+            playlistSaveTimer.restart();
         }
         setWallpaperFromItem: function(item) {
             wallpaper.configuration.WallpaperWorkShopId = item.workshopid;
             wallpaper.configuration.WallpaperSource = Common.packWallpaperSource(item);
+            playlistSaveTimer.restart();
         }
         setUserPaused: function(v) {
             wallpaper.configuration.UserPaused = v;
+            playlistSaveTimer.restart();
         }
     }
 
