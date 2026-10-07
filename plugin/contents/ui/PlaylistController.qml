@@ -26,11 +26,17 @@ Item {
         }
         onAdvanceRequested: function(delta) { mgr.stepBy(delta); }
         onLeadershipChanged: {
-            if (root._ready && !root._joining && !root.editorMode
-                && !sync.follower && root.activePlaylistIdRead) {
+            if (!root._ready || root._joining || root.editorMode) return;
+            // follower and manager.editorMode share this notification. Wait
+            // for their bindings to settle before activating the new leader.
+            // Otherwise activate() can still take the editor-only path and
+            // leave the promoted leader without a rotation timer.
+            Qt.callLater(function() {
+                if (!root._ready || root.editorMode || sync.follower
+                    || !root.activePlaylistIdRead) return;
                 mgr.activate(root.activePlaylistIdRead);
                 if (!root._pauseGate) mgr.pauseTicks();
-            }
+            });
         }
     }
     function _joinSync() {
